@@ -1,20 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostBinding,
+  ViewChild,
+  ViewContainerRef,
+} from '@angular/core';
 
 @Component({
-  selector: 'lib-bottom-sheet',
+  selector: 'bd-bottom-sheet',
   template: `
-    <p>
-      bottom-sheet works!
-    </p>
+    <div class="content">
+      <ng-container #containerRef></ng-container>
+    </div>
   `,
-  styles: [
-  ]
+  styleUrls: ['./bottom-sheet.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BottomSheetComponent implements OnInit {
+export class BottomSheetComponent {
+  @ViewChild('containerRef', { read: ViewContainerRef, static: true })
+  readonly contentViewContainerRef!: ViewContainerRef;
 
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
+  @HostBinding('style.--animationTime')
+  animationTime: string | undefined;
 }
