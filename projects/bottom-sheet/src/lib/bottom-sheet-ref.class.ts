@@ -1,5 +1,9 @@
 import { Observable } from 'rxjs';
 
 export class BottomSheetRef {
-  constructor(public onHidden: Observable<void>) {}
+  onHidden: Observable<void> | null = null;
+
+  constructor(init: Partial<BottomSheetRef>) {
+    Object.assign(this, init);
+  }
 }

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { BottomSheetComponent } from './bottom-sheet/bottom-sheet.component';
+import { BottomSheetComponent } from './bottom-sheet.component';
 
 @NgModule({
   declarations: [BottomSheetComponent],

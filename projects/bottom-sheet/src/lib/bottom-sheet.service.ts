@@ -19,10 +19,9 @@ import { BOTTOM_SHEET_DEFAULT_CONFIG } from './bottom-sheet-default-config.const
 
 @Injectable({ providedIn: 'root' })
 export class BottomSheetService {
-  private _bottomSheetComponentRef:
-    | ComponentRef<BottomSheetComponent>
-    | undefined;
-  private _bottomSheetComponentClickSub: SubscriptionLike | undefined;
+  private _bottomSheetComponentRef: ComponentRef<BottomSheetComponent> | null =
+    null;
+  private _bottomSheetComponentClickSub: SubscriptionLike | null = null;
   private _config = BOTTOM_SHEET_DEFAULT_CONFIG;
   private readonly _bottomSheetOnHidden$ = new Subject<void>();
   private readonly renderer: Renderer2;
@@ -46,7 +45,9 @@ export class BottomSheetService {
     this._initTargetComponent<T>(component);
     this._addBottomSheetComponentToBody();
 
-    return new BottomSheetRef(this._bottomSheetOnHidden$.asObservable());
+    return new BottomSheetRef({
+      onHidden: this._bottomSheetOnHidden$.asObservable(),
+    });
   }
 
   hide(): void {
@@ -126,9 +127,6 @@ export class BottomSheetService {
   }
 
   private get _bottomSheetContentElement(): HTMLElement {
-    return (
-      (this._bottomSheetComponentRef?.hostView as EmbeddedViewRef<unknown>)
-        ?.rootNodes[0] as HTMLElement
-    )?.firstChild as HTMLElement;
+    return this._bottomSheetComponentElement?.firstChild as HTMLElement;
   }
 }

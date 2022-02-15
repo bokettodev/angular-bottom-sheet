@@ -21,5 +21,5 @@ export class BottomSheetComponent {
   readonly contentViewContainerRef!: ViewContainerRef;
 
   @HostBinding('style.--animationTime')
-  animationTime: string | undefined;
+  animationTime: string | null = null;
 }
