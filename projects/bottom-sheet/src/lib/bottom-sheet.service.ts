@@ -1,10 +1,8 @@
-import { DOCUMENT } from '@angular/common';
 import {
   ApplicationRef,
   ComponentFactoryResolver,
   ComponentRef,
   EmbeddedViewRef,
-  Inject,
   Injectable,
   Injector,
   Renderer2,
@@ -16,6 +14,7 @@ import { IBottomSheetConfig } from './bottom-sheet-config.interface';
 import { BottomSheetRef } from './bottom-sheet-ref.class';
 import { BottomSheetComponent } from './bottom-sheet.component';
 import { BOTTOM_SHEET_DEFAULT_CONFIG } from './bottom-sheet-default-config.const';
+import { DomService } from './dom.service';
 
 @Injectable({ providedIn: 'root' })
 export class BottomSheetService {
@@ -27,13 +26,13 @@ export class BottomSheetService {
   private readonly renderer: Renderer2;
 
   constructor(
-    @Inject(DOCUMENT) private readonly document: Document,
-    private readonly componentFactoryResolver: ComponentFactoryResolver,
-    private readonly applicationRef: ApplicationRef,
     private readonly injector: Injector,
-    readonly rendererFactory: RendererFactory2
+    private readonly domService: DomService,
+    private readonly applicationRef: ApplicationRef,
+    private readonly rendererFactory: RendererFactory2,
+    private readonly componentFactoryResolver: ComponentFactoryResolver
   ) {
-    this.renderer = rendererFactory.createRenderer(null, null);
+    this.renderer = this.rendererFactory.createRenderer(null, null);
   }
 
   show<T>(component: Type<T>, config?: IBottomSheetConfig<T>): BottomSheetRef {
@@ -64,8 +63,8 @@ export class BottomSheetService {
 
     this.renderer.setStyle(
       this._bottomSheetContentElement,
-      'max-height',
-      this._config.maxHeight
+      'top',
+      `${this._config.initialIndentFromTopPercentage}%`
     );
   }
 
@@ -87,7 +86,7 @@ export class BottomSheetService {
   private _addBottomSheetComponentToBody(): void {
     this.applicationRef.attachView(this._bottomSheetComponentRef!.hostView);
     this.renderer.appendChild(
-      this.document.body,
+      this.domService.body,
       this._bottomSheetComponentElement
     );
     this._addListenersToBottomSheetComponent(this._bottomSheetComponentElement);
@@ -103,12 +102,12 @@ export class BottomSheetService {
   private _addListenersToBottomSheetComponent(
     bottomSheetComponentElement: HTMLElement
   ): void {
-    this._bottomSheetComponentClickSub = fromEvent(
+    this._bottomSheetComponentClickSub = fromEvent<MouseEvent>(
       bottomSheetComponentElement,
       'click'
-    ).subscribe((event: Event) => {
+    ).subscribe((event) => {
       const isClickInside =
-        (event.target as HTMLElement).parentElement !== this.document.body;
+        (event.target as HTMLElement).parentElement !== this.domService.body;
       if (isClickInside && !this._config.closeOnClickInside) {
         return;
       }

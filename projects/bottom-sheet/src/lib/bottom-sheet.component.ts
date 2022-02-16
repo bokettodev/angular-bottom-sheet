@@ -9,7 +9,7 @@ import {
 @Component({
   selector: 'bd-bottom-sheet',
   template: `
-    <div class="content">
+    <div verticalDragging class="content">
       <ng-container #containerRef></ng-container>
     </div>
   `,
