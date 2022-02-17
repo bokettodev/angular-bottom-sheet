@@ -1,7 +1,7 @@
 import { Directive, ElementRef } from '@angular/core';
 
 @Directive({
-  selector: '[draggingHandle]',
+  selector: '[bottomSheetDraggingHandle]',
 })
 export class DraggingHandleDirective {
   constructor(public elementRef: ElementRef<HTMLElement>) {}

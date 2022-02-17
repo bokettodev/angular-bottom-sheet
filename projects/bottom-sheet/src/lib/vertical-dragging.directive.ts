@@ -5,7 +5,7 @@ import {
   ElementRef,
   OnDestroy,
 } from '@angular/core';
-import { fromEvent, Subscription, takeUntil } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 import { DomService } from './dom.service';
 import { DraggingHandleDirective } from './dragging-hadle.directive';
 
@@ -37,20 +37,19 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
   private _initVariables(): void {
     this._verticalBoundaries = {
-      min: this._borderContainer.offsetTop,
+      min:
+        this._borderElement.offsetTop + this._borderElement.offsetHeight * 0.1,
       max:
-        this._borderContainer.offsetTop +
-        this._borderContainer.offsetHeight -
-        this._hostElement.offsetHeight,
+        this._borderElement.offsetTop + this._borderElement.offsetHeight * 0.9,
     };
   }
 
   private _initListeners(): void {
     this._subscriptions.push(
-      fromEvent<MouseEvent>(this._handleElement!, 'mousedown').subscribe(
+      fromEvent<MouseEvent>(this._handleElement, 'mousedown').subscribe(
         (event) => {
           event.preventDefault();
-          this._initDragListener();
+          this._initDragListener(event);
         }
       )
     );
@@ -64,26 +63,40 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     );
   }
 
-  private _initDragListener(): void {
+  private _initDragListener(dragStartEvent: MouseEvent): void {
     this._dragSubscription?.unsubscribe();
+
+    const indentFromHandleElementTop =
+      dragStartEvent.y - this._handleElement.offsetTop;
 
     this._dragSubscription = fromEvent<MouseEvent>(
       this.domService.document,
       'mousemove'
     ).subscribe((event) => {
-      this._hostElement.style.top = `${event.y}px`;
+      let top = event.y - indentFromHandleElementTop;
+
+      top = Math.max(
+        this._verticalBoundaries!.min,
+        Math.min(top, this._verticalBoundaries!.max)
+      );
+
+      this._draggableElement.style.top = `${top}px`;
     });
   }
 
-  private get _borderContainer(): HTMLElement {
+  private get _borderElement(): HTMLElement {
     return this.domService.body;
   }
 
-  private get _hostElement(): HTMLElement {
+  private get _draggableElement(): HTMLElement {
     return this.elementRef.nativeElement;
   }
 
   private get _handleElement(): HTMLElement {
-    return this._draggingHandle?.elementRef?.nativeElement || this._hostElement;
+    console.log(this._draggingHandle);
+
+    return (
+      this._draggingHandle?.elementRef?.nativeElement || this._draggableElement
+    );
   }
 }

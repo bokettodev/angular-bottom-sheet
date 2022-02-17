@@ -10,6 +10,6 @@ import { VerticalDraggingDirective } from './vertical-dragging.directive';
     DraggingHandleDirective,
   ],
   imports: [],
-  exports: [],
+  exports: [DraggingHandleDirective],
 })
 export class BottomSheetModule {}

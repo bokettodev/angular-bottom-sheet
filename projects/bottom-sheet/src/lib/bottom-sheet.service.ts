@@ -5,8 +5,6 @@ import {
   EmbeddedViewRef,
   Injectable,
   Injector,
-  Renderer2,
-  RendererFactory2,
   Type,
 } from '@angular/core';
 import { fromEvent, Subject, SubscriptionLike } from 'rxjs';
@@ -23,17 +21,13 @@ export class BottomSheetService {
   private _bottomSheetComponentClickSub: SubscriptionLike | null = null;
   private _config = BOTTOM_SHEET_DEFAULT_CONFIG;
   private readonly _bottomSheetOnHidden$ = new Subject<void>();
-  private readonly renderer: Renderer2;
 
   constructor(
     private readonly injector: Injector,
     private readonly domService: DomService,
     private readonly applicationRef: ApplicationRef,
-    private readonly rendererFactory: RendererFactory2,
     private readonly componentFactoryResolver: ComponentFactoryResolver
-  ) {
-    this.renderer = this.rendererFactory.createRenderer(null, null);
-  }
+  ) {}
 
   show<T>(component: Type<T>, config?: IBottomSheetConfig<T>): BottomSheetRef {
     if (config) {
@@ -61,7 +55,7 @@ export class BottomSheetService {
 
     this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationTimeSeconds}s`;
 
-    this.renderer.setStyle(
+    this.domService.renderer.setStyle(
       this._bottomSheetContentElement,
       'top',
       `${this._config.initialIndentFromTopPercentage}%`
@@ -85,7 +79,7 @@ export class BottomSheetService {
 
   private _addBottomSheetComponentToBody(): void {
     this.applicationRef.attachView(this._bottomSheetComponentRef!.hostView);
-    this.renderer.appendChild(
+    this.domService.renderer.appendChild(
       this.domService.body,
       this._bottomSheetComponentElement
     );
