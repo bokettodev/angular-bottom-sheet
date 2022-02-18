@@ -1,27 +1,19 @@
-import {
-  AfterViewInit,
-  ContentChild,
-  Directive,
-  ElementRef,
-  OnDestroy,
-} from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, OnDestroy } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { DomService } from './dom.service';
-import { DraggingHandleDirective } from './dragging-handle.directive';
+import { DraggingService } from './dragging.service';
 
 @Directive({
   selector: '[verticalDragging]',
 })
 export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
-  @ContentChild(DraggingHandleDirective)
-  private readonly _draggingHandle?: DraggingHandleDirective;
-
   private _verticalBoundaries?: { min: number; max: number };
   private _dragSubscription?: Subscription;
   private readonly _subscriptions: Subscription[] = [];
 
   constructor(
     private readonly domService: DomService,
+    private readonly draggingService: DraggingService,
     private readonly elementRef: ElementRef<HTMLElement>
   ) {}
 
@@ -42,13 +34,17 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
       max:
         this._borderElement.offsetTop + this._borderElement.offsetHeight * 0.9,
     };
+    this.domService.setGrabCursor(this._draggingHandleElement);
   }
 
   private _initListeners(): void {
     this._subscriptions.push(
-      fromEvent<MouseEvent>(this._handleElement, 'mousedown').subscribe(
+      fromEvent<MouseEvent>(this._draggingHandleElement, 'mousedown').subscribe(
         (event) => {
           event.preventDefault();
+          this.domService.setGrabbingCursor(this._draggingHandleElement);
+          this.domService.setGrabbingCursor(this.domService.body);
+
           this._initDragListener(event);
         }
       )
@@ -57,6 +53,8 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     this._subscriptions.push(
       fromEvent<MouseEvent>(this.domService.document, 'mouseup').subscribe(
         () => {
+          this.domService.setGrabCursor(this._draggingHandleElement);
+          this.domService.setDefaultCursor(this.domService.body);
           this._dragSubscription?.unsubscribe();
         }
       )
@@ -67,7 +65,9 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     this._dragSubscription?.unsubscribe();
 
     const indentFromHandleElementTop =
-      dragStartEvent.y - this._handleElement.offsetTop;
+      (dragStartEvent.target as HTMLElement).getBoundingClientRect().top -
+      this._draggableElement.getBoundingClientRect().top +
+      dragStartEvent.offsetY;
 
     this._dragSubscription = fromEvent<MouseEvent>(
       this.domService.document,
@@ -92,9 +92,10 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     return this.elementRef.nativeElement;
   }
 
-  private get _handleElement(): HTMLElement {
+  private get _draggingHandleElement(): HTMLElement {
     return (
-      this._draggingHandle?.elementRef?.nativeElement || this._draggableElement
+      this.draggingService.draggingHandleElementRef?.nativeElement ||
+      this._draggableElement
     );
   }
 }
