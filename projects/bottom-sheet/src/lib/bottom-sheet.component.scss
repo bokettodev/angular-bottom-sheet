@@ -4,9 +4,11 @@
   display: block;
   height: 100%;
   width: 100%;
-  background-color: rgba(#000, 0.2);
+  background-color: rgba(#000, 0.5);
   left: 0;
   top: 0;
+
+  animation: opacity var(--animationTime) ease-in;
 }
 
 .content {
@@ -24,9 +26,18 @@
 
 @keyframes bottomSlideUp {
   0% {
-    bottom: -100%;
+    top: 100%;
   }
   100% {
-    bottom: 0;
+    top: var(--initialIndentFromTop);
+  }
+}
+
+@keyframes opacity {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }

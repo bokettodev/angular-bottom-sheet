@@ -22,4 +22,7 @@ export class BottomSheetComponent {
 
   @HostBinding('style.--animationTime')
   animationTime: string | null = null;
+
+  @HostBinding('style.--initialIndentFromTop')
+  initialIndentFromTop: string | null = null;
 }

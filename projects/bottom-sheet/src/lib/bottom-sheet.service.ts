@@ -54,6 +54,7 @@ export class BottomSheetService {
       .create(this.injector);
 
     this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationTimeSeconds}s`;
+    this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialIndentFromTopPercentage}%`;
 
     this.domService.renderer.setStyle(
       this._bottomSheetContentElement,
