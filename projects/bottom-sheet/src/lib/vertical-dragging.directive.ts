@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { DomService } from './dom.service';
-import { DraggingHandleDirective } from './dragging-hadle.directive';
+import { DraggingHandleDirective } from './dragging-handle.directive';
 
 @Directive({
   selector: '[verticalDragging]',
@@ -93,8 +93,6 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   }
 
   private get _handleElement(): HTMLElement {
-    console.log(this._draggingHandle);
-
     return (
       this._draggingHandle?.elementRef?.nativeElement || this._draggableElement
     );

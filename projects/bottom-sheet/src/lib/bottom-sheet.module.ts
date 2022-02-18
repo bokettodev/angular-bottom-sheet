@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BottomSheetComponent } from './bottom-sheet.component';
-import { DraggingHandleDirective } from './dragging-hadle.directive';
+import { DraggingHandleDirective } from './dragging-handle.directive';
 import { VerticalDraggingDirective } from './vertical-dragging.directive';
 
 @NgModule({
