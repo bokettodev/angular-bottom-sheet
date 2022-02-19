@@ -1,5 +1,5 @@
 import { Directive, ElementRef } from '@angular/core';
-import { DraggingService } from './dragging.service';
+import { StoreService } from './store.service';
 
 @Directive({
   selector: '[bottomSheetDraggingHandle]',
@@ -7,8 +7,8 @@ import { DraggingService } from './dragging.service';
 export class DraggingHandleDirective {
   constructor(
     private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly draggingService: DraggingService
+    private readonly storeService: StoreService
   ) {
-    this.draggingService.draggingHandleElementRef = this.elementRef;
+    this.storeService.draggingHandleElement = this.elementRef.nativeElement;
   }
 }

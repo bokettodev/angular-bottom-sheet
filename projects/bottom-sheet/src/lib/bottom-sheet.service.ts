@@ -7,31 +7,35 @@ import {
   Injector,
   Type,
 } from '@angular/core';
-import { fromEvent, Subject, SubscriptionLike } from 'rxjs';
+import { fromEvent, Subject } from 'rxjs';
 import { IBottomSheetConfig } from './bottom-sheet-config.interface';
 import { BottomSheetRef } from './bottom-sheet-ref.class';
 import { BottomSheetComponent } from './bottom-sheet.component';
-import { BOTTOM_SHEET_DEFAULT_CONFIG } from './bottom-sheet-default-config.const';
+import { ConfigService } from './config.service';
 import { DomService } from './dom.service';
+import { StoreService } from './store.service';
 
 @Injectable({ providedIn: 'root' })
 export class BottomSheetService {
   private _bottomSheetComponentRef: ComponentRef<BottomSheetComponent> | null =
     null;
-  private _bottomSheetComponentClickSub: SubscriptionLike | null = null;
-  private _config = BOTTOM_SHEET_DEFAULT_CONFIG;
+
   private readonly _bottomSheetOnHidden$ = new Subject<void>();
 
   constructor(
     private readonly injector: Injector,
     private readonly domService: DomService,
+    private readonly storeService: StoreService,
+    private readonly configService: ConfigService,
     private readonly applicationRef: ApplicationRef,
     private readonly componentFactoryResolver: ComponentFactoryResolver
-  ) {}
+  ) {
+    this._initListeners();
+  }
 
   show<T>(component: Type<T>, config?: IBottomSheetConfig<T>): BottomSheetRef {
     if (config) {
-      this._config = { ...BOTTOM_SHEET_DEFAULT_CONFIG, ...config };
+      this.configService.config = config;
     }
 
     this._initBottomSheetComponent();
@@ -48,12 +52,19 @@ export class BottomSheetService {
     this._bottomSheetOnHidden$.next();
   }
 
+  private _initListeners(): void {
+    this.storeService.bottomSheetHideSub?.unsubscribe();
+    this.storeService.bottomSheetHideSub = this.storeService.hide$.subscribe(
+      () => this.hide()
+    );
+  }
+
   private _initBottomSheetComponent(): void {
     this._bottomSheetComponentRef = this.componentFactoryResolver
       .resolveComponentFactory(BottomSheetComponent)
       .create(this.injector);
 
-    this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationTimeSeconds}s`;
+    this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationTimeMs}ms`;
     this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialIndentFromTopPercentage}%`;
 
     this.domService.renderer.setStyle(
@@ -82,28 +93,46 @@ export class BottomSheetService {
     this.applicationRef.attachView(this._bottomSheetComponentRef!.hostView);
     this.domService.renderer.appendChild(
       this.domService.body,
-      this._bottomSheetComponentElement
+      this._bottomSheetHostElement
     );
-    this._addListenersToBottomSheetComponent(this._bottomSheetComponentElement);
+    this._addListenersToBottomSheetComponent();
   }
 
   private _removeBottomSheetComponentFromBody(): void {
-    this._removeListenersFromBottomSheetComponent();
-    this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
-    this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
-    this._bottomSheetComponentRef!.destroy();
+    this.domService.setOpacityWithAnimation(
+      this._bottomSheetBackdropElement,
+      0,
+      this._config.animationTimeMs || 0
+    );
+
+    this.domService.setTopWithAnimation(
+      this._bottomSheetContentElement,
+      '100%',
+      this._config.animationTimeMs || 0,
+      () => {
+        this.storeService.isDraggableElementCollapsing = false;
+        this._removeListenersFromBottomSheetComponent();
+        this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
+        this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
+        this._bottomSheetComponentRef!.destroy();
+      }
+    );
   }
 
-  private _addListenersToBottomSheetComponent(
-    bottomSheetComponentElement: HTMLElement
-  ): void {
-    this._bottomSheetComponentClickSub = fromEvent<MouseEvent>(
-      bottomSheetComponentElement,
+  private _addListenersToBottomSheetComponent(): void {
+    this.storeService.bottomSheetBackdropClickSub = fromEvent<MouseEvent>(
+      this._bottomSheetBackdropElement,
       'click'
     ).subscribe((event) => {
       const isClickInside =
         (event.target as HTMLElement).parentElement !== this.domService.body;
-      if (isClickInside && !this._config.closeOnClickInside) {
+      const canCloseByClickInside =
+        isClickInside && this._config.closeOnClickInside;
+
+      if (
+        canCloseByClickInside ||
+        this.storeService.isDraggableElementExpanding
+      ) {
         return;
       }
 
@@ -112,15 +141,23 @@ export class BottomSheetService {
   }
 
   private _removeListenersFromBottomSheetComponent(): void {
-    this._bottomSheetComponentClickSub?.unsubscribe();
+    this.storeService.bottomSheetBackdropClickSub?.unsubscribe();
   }
 
-  private get _bottomSheetComponentElement(): HTMLElement {
-    return (this._bottomSheetComponentRef?.hostView as EmbeddedViewRef<unknown>)
+  private get _config(): IBottomSheetConfig {
+    return this.configService.config;
+  }
+
+  private get _bottomSheetHostElement(): HTMLElement {
+    return (this._bottomSheetComponentRef!.hostView as EmbeddedViewRef<unknown>)
       ?.rootNodes[0] as HTMLElement;
   }
 
   private get _bottomSheetContentElement(): HTMLElement {
-    return this._bottomSheetComponentElement?.firstChild as HTMLElement;
+    return this._bottomSheetComponentRef!.instance.contentRef.nativeElement;
+  }
+
+  private get _bottomSheetBackdropElement(): HTMLElement {
+    return this._bottomSheetComponentRef!.instance.backdropRef.nativeElement;
   }
 }

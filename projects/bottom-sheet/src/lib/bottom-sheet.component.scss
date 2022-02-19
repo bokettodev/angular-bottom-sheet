@@ -1,12 +1,20 @@
-// The host acts as a backdrop
 :host {
   position: fixed;
   display: block;
   height: 100%;
   width: 100%;
-  background-color: rgba(#000, 0.5);
-  left: 0;
   top: 0;
+  left: 0;
+}
+
+.backdrop {
+  position: absolute;
+  display: block;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(#000, 0.5);
+  top: 0;
+  left: 0;
 
   animation: opacity var(--animationTime) ease-in;
 }
@@ -20,8 +28,17 @@
   top: 0;
   left: 0;
   overflow: hidden;
+  z-index: 1;
 
   animation: bottomSlideUp var(--animationTime) ease;
+}
+
+.top-transition {
+  transition: top var(--animationTime) ease;
+}
+
+.opacity-transition {
+  transition: opacity var(--animationTime) ease-in;
 }
 
 @keyframes bottomSlideUp {

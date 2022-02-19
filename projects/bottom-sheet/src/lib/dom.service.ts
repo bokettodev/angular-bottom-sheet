@@ -12,16 +12,38 @@ export class DomService {
     this.renderer = this.rendererFactory.createRenderer(null, null);
   }
 
-  setDefaultCursor(element: HTMLElement): void {
-    this.renderer.setStyle(element, 'cursor', 'default');
+  setTop(element: HTMLElement, value: number | string): void {
+    this.renderer.setStyle(element, 'top', value);
   }
 
-  setGrabCursor(element: HTMLElement): void {
-    this.renderer.setStyle(element, 'cursor', 'grab');
+  setTopWithAnimation(
+    element: HTMLElement,
+    value: number | string,
+    animationTimeMs: number,
+    onAnimationEnd?: () => void
+  ): void {
+    this.renderer.addClass(element, 'top-transition');
+    this.setTop(element, value);
+
+    setTimeout(() => {
+      this.renderer.removeClass(element, 'top-transition');
+      onAnimationEnd ? onAnimationEnd() : null;
+    }, animationTimeMs);
   }
 
-  setGrabbingCursor(element: HTMLElement): void {
-    this.renderer.setStyle(element, 'cursor', 'grabbing');
+  setOpacityWithAnimation(
+    element: HTMLElement,
+    value: number | string,
+    animationTimeMs: number,
+    onAnimationEnd?: () => void
+  ): void {
+    this.renderer.addClass(element, 'opacity-transition');
+    this.renderer.setStyle(element, 'opacity', value);
+
+    setTimeout(() => {
+      this.renderer.removeClass(element, 'opacity-transition');
+      onAnimationEnd ? onAnimationEnd() : null;
+    }, animationTimeMs);
   }
 
   get body(): HTMLBodyElement {
