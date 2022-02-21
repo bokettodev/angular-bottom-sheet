@@ -110,8 +110,8 @@ export class BottomSheetService {
       '100%',
       this._config.animationsTimeMs || 0,
       () => {
-        this.storeService.isDraggableElementCollapsing = false;
-        this._removeListenersFromBottomSheetComponent();
+        this.storeService.isDraggableElementProcessing = false;
+        this.storeService.bottomSheetHostClickSub?.unsubscribe();
         this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
         this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
         this._bottomSheetComponentRef!.destroy();
@@ -120,28 +120,22 @@ export class BottomSheetService {
   }
 
   private _addListenersToBottomSheetComponent(): void {
-    this.storeService.bottomSheetBackdropClickSub = fromEvent<MouseEvent>(
-      this._bottomSheetBackdropElement,
+    this.storeService.bottomSheetHostClickSub = fromEvent<MouseEvent>(
+      this._bottomSheetHostElement,
       'click'
     ).subscribe((event) => {
-      const isClickInside =
-        (event.target as HTMLElement).parentElement !== this.domService.body;
-      const canCloseByClickInside =
-        isClickInside && this._config.closeOnClickInside;
+      if (!this.storeService.canHide) {
+        return;
+      }
 
-      if (
-        canCloseByClickInside ||
-        this.storeService.isDraggableElementExpanding
-      ) {
+      const isClickInside =
+        (event.target as HTMLElement) !== this._bottomSheetBackdropElement;
+      if (isClickInside && !this._config.hideOnClickInside) {
         return;
       }
 
       this.hide();
     });
-  }
-
-  private _removeListenersFromBottomSheetComponent(): void {
-    this.storeService.bottomSheetBackdropClickSub?.unsubscribe();
   }
 
   private get _config(): IBottomSheetConfig {

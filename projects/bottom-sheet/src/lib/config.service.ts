@@ -5,6 +5,7 @@ import { IBottomSheetConfig } from './config.interface';
 export class ConfigService {
   private _config: IBottomSheetConfig = {
     animationsTimeMs: 300,
+    canHide: true,
     collapseAfterTopPercentage: 85,
     expandAfterTopPercentage: 35,
     initialTopPercentage: 65,

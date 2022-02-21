@@ -1,6 +1,7 @@
 export interface IBottomSheetConfig<T = unknown> {
   animationsTimeMs?: number;
-  closeOnClickInside?: boolean;
+  canHide?: boolean;
+  hideOnClickInside?: boolean;
   collapseAfterTopPercentage?: number;
   expandAfterTopPercentage?: number;
   initialTopPercentage?: number;

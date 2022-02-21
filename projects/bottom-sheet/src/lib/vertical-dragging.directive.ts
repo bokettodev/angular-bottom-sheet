@@ -1,5 +1,5 @@
 import { AfterViewInit, Directive, ElementRef, OnDestroy } from '@angular/core';
-import { fromEvent, Subscription, SubscriptionLike } from 'rxjs';
+import { fromEvent, SubscriptionLike } from 'rxjs';
 import { IBottomSheetConfig } from './config.interface';
 import { ConfigService } from './config.service';
 import { DomService } from './dom.service';
@@ -10,9 +10,14 @@ import { isDefined } from './value-utils';
   selector: '[verticalDragging]',
 })
 export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
-  private _verticalBoundaries?: { min: number; max: number };
-  private _dragSubscription?: SubscriptionLike;
-  private readonly _subscriptions: Subscription[] = [];
+  private _borderElement!: HTMLElement;
+  private _draggableElement!: HTMLElement;
+  private _draggingHandleElement!: HTMLElement;
+  private _verticalBoundaries!: { min: number; max: number };
+
+  private _draggingStartSubscription?: SubscriptionLike;
+  private _draggingSubscription?: SubscriptionLike;
+  private _draggingEndSubscription?: SubscriptionLike;
 
   constructor(
     private readonly domService: DomService,
@@ -28,11 +33,17 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._removeDraggingStartListener();
+    this._removeDraggingEndListener();
     this._removeDraggingListener();
-    this._subscriptions.forEach((s) => s?.unsubscribe());
   }
 
   private _initVariables(): void {
+    this._borderElement = this.domService.body;
+    this._draggableElement = this.elementRef.nativeElement;
+    this._draggingHandleElement =
+      this.storeService.draggingHandleElement || this._draggableElement;
+
     this._verticalBoundaries = {
       min: this._borderElement.offsetTop,
       max: this._borderElement.offsetTop + this._borderElement.offsetHeight,
@@ -40,36 +51,32 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   }
 
   private _addDraggingStartListener(): void {
-    this._subscriptions.push(
-      fromEvent<MouseEvent>(this._draggingHandleElement, 'mousedown').subscribe(
-        (event) => {
-          event.preventDefault();
-          if (
-            this.storeService.isDraggableElementExpanding ||
-            this.storeService.isDraggableElementCollapsing
-          ) {
-            return;
-          }
-          this._addDraggingListener(event);
-        }
-      )
-    );
+    this._removeDraggingStartListener();
+
+    this._draggingStartSubscription = fromEvent<MouseEvent>(
+      this._draggingHandleElement,
+      'mousedown'
+    ).subscribe((event) => {
+      event.preventDefault();
+      if (this.storeService.isDraggableElementProcessing) {
+        return;
+      }
+      this._addDraggingListener(event);
+    });
   }
 
   private _addDraggingEndListener(): void {
-    this._subscriptions.push(
-      fromEvent<MouseEvent>(this.domService.document, 'mouseup').subscribe(
-        () => {
-          if (
-            this.storeService.isDraggableElementExpanding ||
-            this.storeService.isDraggableElementCollapsing
-          ) {
-            return;
-          }
-          this._removeDraggingListener();
-        }
-      )
-    );
+    this._removeDraggingEndListener();
+
+    this._draggingEndSubscription = fromEvent<MouseEvent>(
+      this.domService.document,
+      'mouseup'
+    ).subscribe(() => {
+      if (this.storeService.isDraggableElementProcessing) {
+        return;
+      }
+      this._removeDraggingListener();
+    });
   }
 
   private _addDraggingListener(dragStartEvent: MouseEvent): void {
@@ -80,16 +87,21 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
       this._draggableElement.getBoundingClientRect().top +
       dragStartEvent.offsetY;
 
-    this._dragSubscription = fromEvent<MouseEvent>(
+    this._draggingSubscription = fromEvent<MouseEvent>(
       this.domService.document,
       'mousemove'
     ).subscribe((event) => {
       let topPx = event.y - indentFromHandleElementTop;
 
       topPx = Math.max(
-        this._verticalBoundaries!.min,
+        this._verticalBoundaries.min,
         Math.min(topPx, this._verticalBoundaries!.max)
       );
+
+      if (this.storeService.isDraggableElementExpanded && topPx) {
+        this._moveDraggableElementToInitialTop();
+        return;
+      }
 
       if (this._shouldToExpand) {
         this._expandDraggableElement();
@@ -97,41 +109,63 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
         this._collapseDraggableElement();
       } else {
         this.domService.setTop(this._draggableElement, `${topPx}px`);
+        this.storeService.isDraggableElementExpanded = !topPx;
       }
     });
   }
 
-  private _removeDraggingListener(): void {
-    this._dragSubscription?.unsubscribe();
+  private _moveDraggableElementToInitialTop(): void {
+    this._removeDraggingListener();
+    this.storeService.isDraggableElementProcessing = true;
+    this.domService.setTopWithAnimation(
+      this._draggableElement,
+      `${this._config.initialTopPercentage}%`,
+      this._config.animationsTimeMs || 0,
+      () => {
+        this.storeService.isDraggableElementExpanded = false;
+        this.storeService.isDraggableElementProcessing = false;
+      }
+    );
   }
 
   private _expandDraggableElement(): void {
     this._removeDraggingListener();
-    this.storeService.isDraggableElementExpanding = true;
+    this.storeService.isDraggableElementProcessing = true;
 
     this.domService.setTopWithAnimation(
       this._draggableElement,
       0,
       this._config.animationsTimeMs || 0,
-      () => (this.storeService.isDraggableElementExpanding = false)
+      () => {
+        this.storeService.isDraggableElementExpanded = true;
+        this.storeService.isDraggableElementProcessing = false;
+      }
     );
   }
 
   private _collapseDraggableElement(): void {
     this._removeDraggingListener();
-    this.storeService.isDraggableElementCollapsing = true;
+    this.storeService.isDraggableElementProcessing = true;
     this.storeService.hide$.next();
   }
 
-  private get _shouldToExpand(): boolean {
-    if (!isDefined(this._config.expandAfterTopPercentage)) {
-      return false;
-    }
+  private _removeDraggingStartListener(): void {
+    this._draggingStartSubscription?.unsubscribe();
+  }
 
-    const isAutoExpandIndentInvalid = isNaN(
-      this._config.expandAfterTopPercentage!
-    );
-    if (isAutoExpandIndentInvalid) {
+  private _removeDraggingListener(): void {
+    this._draggingSubscription?.unsubscribe();
+  }
+
+  private _removeDraggingEndListener(): void {
+    this._draggingEndSubscription?.unsubscribe();
+  }
+
+  private get _shouldToExpand(): boolean {
+    if (
+      !isDefined(this._config.expandAfterTopPercentage) ||
+      isNaN(this._config.expandAfterTopPercentage!)
+    ) {
       return false;
     }
 
@@ -142,14 +176,10 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   }
 
   private get _shouldToCollapse(): boolean {
-    if (!isDefined(this._config.collapseAfterTopPercentage)) {
-      return false;
-    }
-
-    const isAutoCollapseIndentInvalid = isNaN(
-      this._config.collapseAfterTopPercentage!
-    );
-    if (isAutoCollapseIndentInvalid) {
+    if (
+      !isDefined(this._config.collapseAfterTopPercentage) ||
+      isNaN(this._config.collapseAfterTopPercentage!)
+    ) {
       return false;
     }
 
@@ -161,17 +191,5 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
   private get _config(): IBottomSheetConfig {
     return this.configService.config;
-  }
-
-  private get _borderElement(): HTMLElement {
-    return this.domService.body;
-  }
-
-  private get _draggableElement(): HTMLElement {
-    return this.elementRef.nativeElement;
-  }
-
-  private get _draggingHandleElement(): HTMLElement {
-    return this.storeService.draggingHandleElement || this._draggableElement;
   }
 }
