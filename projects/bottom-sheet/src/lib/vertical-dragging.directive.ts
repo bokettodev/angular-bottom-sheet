@@ -4,6 +4,7 @@ import { IBottomSheetConfig } from './bottom-sheet-config.interface';
 import { ConfigService } from './config.service';
 import { DomService } from './dom.service';
 import { StoreService } from './store.service';
+import { isDefined } from './value-utils';
 
 @Directive({
   selector: '[verticalDragging]',
@@ -111,7 +112,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     this.domService.setTopWithAnimation(
       this._draggableElement,
       0,
-      this._config.animationTimeMs || 0,
+      this._config.animationsTimeMs || 0,
       () => (this.storeService.isDraggableElementExpanding = false)
     );
   }
@@ -123,12 +124,12 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   }
 
   private get _shouldToExpand(): boolean {
-    if (!this._config.autoExpand) {
+    if (!isDefined(this._config.expandAfterTopPercentage)) {
       return false;
     }
 
     const isAutoExpandIndentInvalid = isNaN(
-      this._config.autoExpandIndentPercentage!
+      this._config.expandAfterTopPercentage!
     );
     if (isAutoExpandIndentInvalid) {
       return false;
@@ -136,17 +137,17 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
     const autoExpandIndentPx =
       (this._borderElement.offsetHeight / 100) *
-      this._config.autoExpandIndentPercentage!;
+      this._config.expandAfterTopPercentage!;
     return this._draggableElement.offsetTop <= autoExpandIndentPx;
   }
 
   private get _shouldToCollapse(): boolean {
-    if (!this._config.autoCollapse) {
+    if (!isDefined(this._config.collapseAfterTopPercentage)) {
       return false;
     }
 
     const isAutoCollapseIndentInvalid = isNaN(
-      this._config.autoCollapseIndentPercentage!
+      this._config.collapseAfterTopPercentage!
     );
     if (isAutoCollapseIndentInvalid) {
       return false;
@@ -154,7 +155,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
     const autoCollapseIndentPx =
       (this._borderElement.offsetHeight / 100) *
-      this._config.autoCollapseIndentPercentage!;
+      this._config.collapseAfterTopPercentage!;
     return this._draggableElement.offsetTop >= autoCollapseIndentPx;
   }
 

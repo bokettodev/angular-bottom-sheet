@@ -64,13 +64,13 @@ export class BottomSheetService {
       .resolveComponentFactory(BottomSheetComponent)
       .create(this.injector);
 
-    this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationTimeMs}ms`;
-    this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialIndentFromTopPercentage}%`;
+    this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationsTimeMs}ms`;
+    this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialTopPercentage}%`;
 
     this.domService.renderer.setStyle(
       this._bottomSheetContentElement,
       'top',
-      `${this._config.initialIndentFromTopPercentage}%`
+      `${this._config.initialTopPercentage}%`
     );
   }
 
@@ -102,13 +102,13 @@ export class BottomSheetService {
     this.domService.setOpacityWithAnimation(
       this._bottomSheetBackdropElement,
       0,
-      this._config.animationTimeMs || 0
+      this._config.animationsTimeMs || 0
     );
 
     this.domService.setTopWithAnimation(
       this._bottomSheetContentElement,
       '100%',
-      this._config.animationTimeMs || 0,
+      this._config.animationsTimeMs || 0,
       () => {
         this.storeService.isDraggableElementCollapsing = false;
         this._removeListenersFromBottomSheetComponent();

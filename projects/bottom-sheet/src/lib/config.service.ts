@@ -4,8 +4,10 @@ import { IBottomSheetConfig } from './bottom-sheet-config.interface';
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
   private _config: IBottomSheetConfig = {
-    animationTimeMs: 300,
-    initialIndentFromTopPercentage: 65,
+    animationsTimeMs: 300,
+    collapseAfterTopPercentage: 85,
+    expandAfterTopPercentage: 35,
+    initialTopPercentage: 65,
   };
 
   get config(): IBottomSheetConfig {

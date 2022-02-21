@@ -1,10 +1,8 @@
 export interface IBottomSheetConfig<T = unknown> {
-  animationTimeMs?: number;
-  autoCollapse?: boolean;
-  autoCollapseIndentPercentage?: number;
-  autoExpand?: boolean;
-  autoExpandIndentPercentage?: number;
+  animationsTimeMs?: number;
   closeOnClickInside?: boolean;
-  initialIndentFromTopPercentage?: number;
+  collapseAfterTopPercentage?: number;
+  expandAfterTopPercentage?: number;
+  initialTopPercentage?: number;
   initialState?: Partial<T>;
 }
