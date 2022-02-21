@@ -1,6 +1,6 @@
 import { AfterViewInit, Directive, ElementRef, OnDestroy } from '@angular/core';
 import { fromEvent, Subscription, SubscriptionLike } from 'rxjs';
-import { IBottomSheetConfig } from './bottom-sheet-config.interface';
+import { IBottomSheetConfig } from './config.interface';
 import { ConfigService } from './config.service';
 import { DomService } from './dom.service';
 import { StoreService } from './store.service';

@@ -8,7 +8,7 @@ import {
   Type,
 } from '@angular/core';
 import { fromEvent, Subject } from 'rxjs';
-import { IBottomSheetConfig } from './bottom-sheet-config.interface';
+import { IBottomSheetConfig } from './config.interface';
 import { BottomSheetRef } from './bottom-sheet-ref.class';
 import { BottomSheetComponent } from './bottom-sheet.component';
 import { ConfigService } from './config.service';

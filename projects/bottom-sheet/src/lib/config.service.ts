@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IBottomSheetConfig } from './bottom-sheet-config.interface';
+import { IBottomSheetConfig } from './config.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
