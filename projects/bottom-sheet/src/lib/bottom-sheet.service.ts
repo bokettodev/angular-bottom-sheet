@@ -66,12 +66,6 @@ export class BottomSheetService {
 
     this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationsTimeMs}ms`;
     this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialTopPercentage}%`;
-
-    this.domService.renderer.setStyle(
-      this._bottomSheetContentElement,
-      'top',
-      `${this._config.initialTopPercentage}%`
-    );
   }
 
   private _initTargetComponent<T>(component: Type<T>): void {
@@ -99,24 +93,18 @@ export class BottomSheetService {
   }
 
   private _removeBottomSheetComponentFromBody(): void {
-    this.domService.setOpacityWithAnimation(
-      this._bottomSheetBackdropElement,
-      0,
-      this._config.animationsTimeMs || 0
-    );
+    this.storeService.isDraggableElementProcessing = false;
+    this.storeService.bottomSheetHostClickSub?.unsubscribe();
+    this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
 
-    this.domService.setTopWithAnimation(
-      this._bottomSheetContentElement,
-      '100%',
-      this._config.animationsTimeMs || 0,
-      () => {
-        this.storeService.isDraggableElementProcessing = false;
-        this.storeService.bottomSheetHostClickSub?.unsubscribe();
-        this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
-        this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
-        this._bottomSheetComponentRef!.destroy();
-      }
-    );
+    this.storeService.bottomSheetHostAnimationDoneSub =
+      this._bottomSheetComponentRef!.instance.hostAnimationDone$.subscribe(
+        () => {
+          this.storeService.bottomSheetHostAnimationDoneSub?.unsubscribe();
+          this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
+          this._bottomSheetComponentRef!.destroy();
+        }
+      );
   }
 
   private _addListenersToBottomSheetComponent(): void {
@@ -145,10 +133,6 @@ export class BottomSheetService {
   private get _bottomSheetHostElement(): HTMLElement {
     return (this._bottomSheetComponentRef!.hostView as EmbeddedViewRef<unknown>)
       ?.rootNodes[0] as HTMLElement;
-  }
-
-  private get _bottomSheetContentElement(): HTMLElement {
-    return this._bottomSheetComponentRef!.instance.contentRef.nativeElement;
   }
 
   private get _bottomSheetBackdropElement(): HTMLElement {

@@ -15,8 +15,6 @@
   background-color: rgba(#000, 0.5);
   top: 0;
   left: 0;
-
-  animation: opacity var(--animationTime) ease-in;
 }
 
 .content {
@@ -25,36 +23,12 @@
   background-color: #fff;
   height: 100%;
   width: 100%;
-  top: 0;
+  top: var(--initialIndentFromTop);
   left: 0;
   overflow: hidden;
   z-index: 1;
-
-  animation: bottomSlideUp var(--animationTime) ease;
 }
 
 .top-transition {
   transition: top var(--animationTime) ease;
-}
-
-.opacity-transition {
-  transition: opacity var(--animationTime) ease-in;
-}
-
-@keyframes bottomSlideUp {
-  0% {
-    top: 100%;
-  }
-  100% {
-    top: var(--initialIndentFromTop);
-  }
-}
-
-@keyframes opacity {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }

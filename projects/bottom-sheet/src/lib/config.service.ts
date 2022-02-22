@@ -8,6 +8,7 @@ export class ConfigService {
     canHide: true,
     collapseAfterTopPercentage: 85,
     expandAfterTopPercentage: 35,
+    hideOnClickInside: false,
     initialTopPercentage: 65,
   };
 

@@ -31,21 +31,6 @@ export class DomService {
     }, animationTimeMs);
   }
 
-  setOpacityWithAnimation(
-    element: HTMLElement,
-    value: number | string,
-    animationTimeMs: number,
-    onAnimationEnd?: () => void
-  ): void {
-    this.renderer.addClass(element, 'opacity-transition');
-    this.renderer.setStyle(element, 'opacity', value);
-
-    setTimeout(() => {
-      this.renderer.removeClass(element, 'opacity-transition');
-      onAnimationEnd ? onAnimationEnd() : null;
-    }, animationTimeMs);
-  }
-
   get body(): HTMLBodyElement {
     return this.document.body as HTMLBodyElement;
   }

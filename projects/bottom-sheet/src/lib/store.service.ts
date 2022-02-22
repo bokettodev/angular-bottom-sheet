@@ -10,12 +10,14 @@ export class StoreService implements OnDestroy {
   isDraggableElementProcessing = false;
   isDraggableElementExpanded = false;
 
+  bottomSheetHostAnimationDoneSub: SubscriptionLike | null = null;
   bottomSheetHostClickSub: SubscriptionLike | null = null;
   bottomSheetHideSub: SubscriptionLike | null = null;
 
   constructor(private configService: ConfigService) {}
 
   ngOnDestroy(): void {
+    this.bottomSheetHostAnimationDoneSub?.unsubscribe();
     this.bottomSheetHostClickSub?.unsubscribe();
     this.bottomSheetHideSub?.unsubscribe();
   }

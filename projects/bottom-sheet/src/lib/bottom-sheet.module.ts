@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BottomSheetComponent } from './bottom-sheet.component';
 import { DraggingHandleDirective } from './dragging-handle.directive';
 import { VerticalDraggingDirective } from './vertical-dragging.directive';
@@ -9,7 +10,7 @@ import { VerticalDraggingDirective } from './vertical-dragging.directive';
     VerticalDraggingDirective,
     DraggingHandleDirective,
   ],
-  imports: [],
+  imports: [BrowserAnimationsModule],
   exports: [DraggingHandleDirective],
 })
 export class BottomSheetModule {}
