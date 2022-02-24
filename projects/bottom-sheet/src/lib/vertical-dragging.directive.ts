@@ -81,6 +81,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
   private _addDraggingListener(dragStartEvent: MouseEvent): void {
     this._removeDraggingListener();
+    this._toggleDraggableElementTransition(true);
 
     const indentFromHandleElementTop =
       (dragStartEvent.target as HTMLElement).getBoundingClientRect().top -
@@ -108,7 +109,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
       } else if (this._shouldToCollapse) {
         this._collapseDraggableElement();
       } else {
-        this.domService.setTop(this._draggableElement, `${topPx}px`);
+        this._setDraggableElementTop(`${topPx}px`);
         this.storeService.isDraggableElementExpanded = !topPx;
       }
     });
@@ -117,30 +118,23 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   private _moveDraggableElementToInitialTop(): void {
     this._removeDraggingListener();
     this.storeService.isDraggableElementProcessing = true;
-    this.domService.setTopWithAnimation(
-      this._draggableElement,
-      `${this._config.initialTopPercentage}%`,
-      this._config.animationsTimeMs || 0,
-      () => {
-        this.storeService.isDraggableElementExpanded = false;
-        this.storeService.isDraggableElementProcessing = false;
-      }
-    );
+    this._setDraggableElementTop(`${this._config.initialTopPercentage}%`);
+
+    setTimeout(() => {
+      this.storeService.isDraggableElementExpanded = false;
+      this.storeService.isDraggableElementProcessing = false;
+    }, this._config.animationsTimeMs);
   }
 
   private _expandDraggableElement(): void {
     this._removeDraggingListener();
     this.storeService.isDraggableElementProcessing = true;
+    this._setDraggableElementTop(0);
 
-    this.domService.setTopWithAnimation(
-      this._draggableElement,
-      0,
-      this._config.animationsTimeMs || 0,
-      () => {
-        this.storeService.isDraggableElementExpanded = true;
-        this.storeService.isDraggableElementProcessing = false;
-      }
-    );
+    setTimeout(() => {
+      this.storeService.isDraggableElementExpanded = true;
+      this.storeService.isDraggableElementProcessing = false;
+    }, this._config.animationsTimeMs);
   }
 
   private _collapseDraggableElement(): void {
@@ -149,12 +143,32 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
     this.storeService.hide$.next();
   }
 
+  private _setDraggableElementTop(top: string | number): void {
+    this.domService.setTop(this._draggableElement, top);
+  }
+
+  private _toggleDraggableElementTransition(enableTransition: boolean): void {
+    const transitionClass = 'content--no-transition';
+    if (!enableTransition) {
+      this.domService.renderer.removeClass(
+        this._draggableElement,
+        transitionClass
+      );
+    } else if (!this._draggableElement.className.includes(transitionClass)) {
+      this.domService.renderer.addClass(
+        this._draggableElement,
+        transitionClass
+      );
+    }
+  }
+
   private _removeDraggingStartListener(): void {
     this._draggingStartSubscription?.unsubscribe();
   }
 
   private _removeDraggingListener(): void {
     this._draggingSubscription?.unsubscribe();
+    this._toggleDraggableElementTransition(false);
   }
 
   private _removeDraggingEndListener(): void {

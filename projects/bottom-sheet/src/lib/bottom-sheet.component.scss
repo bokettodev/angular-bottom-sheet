@@ -27,8 +27,9 @@
   left: 0;
   overflow: hidden;
   z-index: 1;
-}
-
-.top-transition {
   transition: top var(--animationTime) ease;
+
+  &--no-transition {
+    transition: none;
+  }
 }

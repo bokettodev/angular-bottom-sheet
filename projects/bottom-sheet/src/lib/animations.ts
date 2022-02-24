@@ -11,7 +11,6 @@ import {
 /**
  * FADE ANIMATION
  */
-
 // Styles
 const FADE_IN = { opacity: 1 };
 const FADE_OUT = { opacity: 0 };
@@ -41,7 +40,6 @@ export const FADE_IN_OUT_ANIMATION = trigger('fadeInOutAnimation', [
 /**
  * SLIDE ANIMATION
  */
-
 // Styles
 const SLIDE_IN = { top: '*' };
 const SLIDE_OUT = { top: '100%' };

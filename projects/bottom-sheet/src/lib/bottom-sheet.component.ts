@@ -17,10 +17,7 @@ import { BOTTOM_SHEET_HOST_ANIMATION } from './animations';
     <div
       verticalDragging
       class="content"
-      [@slideInOutAnimation]="{
-        value: true,
-        params: { animationTime: animationTime }
-      }"
+      [@slideInOutAnimation]="animationDefault"
     >
       <ng-container #containerRef></ng-container>
     </div>
@@ -29,10 +26,7 @@ import { BOTTOM_SHEET_HOST_ANIMATION } from './animations';
     <div
       #backdropRef
       class="backdrop"
-      [@fadeInOutAnimation]="{
-        value: true,
-        params: { animationTime: animationTime }
-      }"
+      [@fadeInOutAnimation]="animationDefault"
     ></div>
   `,
   styleUrls: ['./bottom-sheet.component.scss'],
@@ -55,9 +49,17 @@ export class BottomSheetComponent {
   @HostBinding('@bottomSheetHostAnimation')
   hostAnimation = null;
 
+  readonly hostAnimationDone$ = new Subject<void>();
+
   @HostListener('@bottomSheetHostAnimation.done')
-  hostAnimationDone(): void {
+  private _hostAnimationDone(): void {
     this.hostAnimationDone$.next();
   }
-  readonly hostAnimationDone$ = new Subject<void>();
+
+  get animationDefault() {
+    return {
+      value: true,
+      params: { animationTime: this.animationTime },
+    };
+  }
 }

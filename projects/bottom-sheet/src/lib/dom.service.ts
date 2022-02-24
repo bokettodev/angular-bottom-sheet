@@ -16,21 +16,6 @@ export class DomService {
     this.renderer.setStyle(element, 'top', value);
   }
 
-  setTopWithAnimation(
-    element: HTMLElement,
-    value: number | string,
-    animationTimeMs: number,
-    onAnimationEnd?: () => void
-  ): void {
-    this.renderer.addClass(element, 'top-transition');
-    this.setTop(element, value);
-
-    setTimeout(() => {
-      this.renderer.removeClass(element, 'top-transition');
-      onAnimationEnd ? onAnimationEnd() : null;
-    }, animationTimeMs);
-  }
-
   get body(): HTMLBodyElement {
     return this.document.body as HTMLBodyElement;
   }
