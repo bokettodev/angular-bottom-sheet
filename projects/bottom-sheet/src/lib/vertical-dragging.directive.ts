@@ -1,6 +1,6 @@
 import { AfterViewInit, Directive, ElementRef, OnDestroy } from '@angular/core';
 import { fromEvent, SubscriptionLike } from 'rxjs';
-import { IBottomSheetConfig } from './config.interface';
+import { BottomSheetConfig } from './config.interface';
 import { ConfigService } from './config.service';
 import { DomService } from './dom.service';
 import { StoreService } from './store.service';
@@ -10,14 +10,14 @@ import { isDefined } from './value-utils';
   selector: '[verticalDragging]',
 })
 export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
-  private _borderElement!: HTMLElement;
-  private _draggableElement!: HTMLElement;
-  private _draggingHandleElement!: HTMLElement;
-  private _verticalBoundaries!: { min: number; max: number };
+  private borderElement!: HTMLElement;
+  private draggableElement!: HTMLElement;
+  private draggingHandleElement!: HTMLElement;
+  private verticalBoundaries!: { min: number; max: number };
 
-  private _draggingStartSubscription?: SubscriptionLike;
-  private _draggingSubscription?: SubscriptionLike;
-  private _draggingEndSubscription?: SubscriptionLike;
+  private draggingStartSubscription?: SubscriptionLike;
+  private draggingSubscription?: SubscriptionLike;
+  private draggingEndSubscription?: SubscriptionLike;
 
   constructor(
     private readonly domService: DomService,
@@ -27,183 +27,168 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit(): void {
-    this._initVariables();
-    this._addDraggingStartListener();
-    this._addDraggingEndListener();
+    this.initVariables();
+    this.addDraggingStartListener();
+    this.addDraggingEndListener();
   }
 
   ngOnDestroy(): void {
-    this._removeDraggingStartListener();
-    this._removeDraggingEndListener();
-    this._removeDraggingListener();
+    this.removeDraggingStartListener();
+    this.removeDraggingEndListener();
+    this.removeDraggingListener();
   }
 
-  private _initVariables(): void {
-    this._borderElement = this.domService.body;
-    this._draggableElement = this.elementRef.nativeElement;
-    this._draggingHandleElement =
-      this.storeService.draggingHandleElement || this._draggableElement;
+  private initVariables(): void {
+    this.borderElement = this.domService.body;
+    this.draggableElement = this.elementRef.nativeElement;
+    this.draggingHandleElement =
+      this.storeService.draggingHandleElement || this.draggableElement;
 
-    this._verticalBoundaries = {
-      min: this._borderElement.offsetTop,
-      max: this._borderElement.offsetTop + this._borderElement.offsetHeight,
+    this.verticalBoundaries = {
+      min: this.borderElement.offsetTop,
+      max: this.borderElement.offsetTop + this.borderElement.offsetHeight,
     };
   }
 
-  private _addDraggingStartListener(): void {
-    this._removeDraggingStartListener();
+  private addDraggingStartListener(): void {
+    this.removeDraggingStartListener();
 
-    this._draggingStartSubscription = fromEvent<MouseEvent>(
-      this._draggingHandleElement,
+    this.draggingStartSubscription = fromEvent<MouseEvent>(
+      this.draggingHandleElement,
       'mousedown'
     ).subscribe((event) => {
       event.preventDefault();
       if (this.storeService.isDraggableElementProcessing) {
         return;
       }
-      this._addDraggingListener(event);
+      this.addDraggingListener(event);
     });
   }
 
-  private _addDraggingEndListener(): void {
-    this._removeDraggingEndListener();
+  private addDraggingEndListener(): void {
+    this.removeDraggingEndListener();
 
-    this._draggingEndSubscription = fromEvent<MouseEvent>(
+    this.draggingEndSubscription = fromEvent<MouseEvent>(
       this.domService.document,
       'mouseup'
     ).subscribe(() => {
       if (this.storeService.isDraggableElementProcessing) {
         return;
       }
-      this._removeDraggingListener();
+      this.removeDraggingListener();
     });
   }
 
-  private _addDraggingListener(dragStartEvent: MouseEvent): void {
-    this._removeDraggingListener();
-    this._toggleDraggableElementTransition(true);
+  private addDraggingListener(dragStartEvent: MouseEvent): void {
+    this.removeDraggingListener();
+    this.toggleDraggableElementTransition(true);
 
     const indentFromHandleElementTop =
       (dragStartEvent.target as HTMLElement).getBoundingClientRect().top -
-      this._draggableElement.getBoundingClientRect().top +
+      this.draggableElement.getBoundingClientRect().top +
       dragStartEvent.offsetY;
 
-    this._draggingSubscription = fromEvent<MouseEvent>(
+    this.draggingSubscription = fromEvent<MouseEvent>(
       this.domService.document,
       'mousemove'
     ).subscribe((event) => {
       let topPx = event.y - indentFromHandleElementTop;
 
       topPx = Math.max(
-        this._verticalBoundaries.min,
-        Math.min(topPx, this._verticalBoundaries!.max)
+        this.verticalBoundaries.min,
+        Math.min(topPx, this.verticalBoundaries!.max)
       );
 
-      if (this.storeService.isDraggableElementExpanded && topPx) {
-        this._moveDraggableElementToInitialTop();
-        return;
-      }
-
-      if (this._shouldToExpand) {
-        this._expandDraggableElement();
-      } else if (this._shouldToCollapse) {
-        this._collapseDraggableElement();
+      if (this.shouldToExpand) {
+        if (this.storeService.isDraggableElementAutoExpandable) {
+          this.expandDraggableElement();
+        } else {
+          this.setDraggableElementTop(`${topPx}px`);
+        }
+      } else if (this.shouldToCollapse) {
+        this.collapseDraggableElement();
       } else {
-        this._setDraggableElementTop(`${topPx}px`);
-        this.storeService.isDraggableElementExpanded = !topPx;
+        this.storeService.isDraggableElementAutoExpandable = true;
+        this.setDraggableElementTop(`${topPx}px`);
       }
     });
   }
 
-  private _moveDraggableElementToInitialTop(): void {
-    this._removeDraggingListener();
+  private expandDraggableElement(): void {
+    this.removeDraggingListener();
+    this.storeService.isDraggableElementAutoExpandable = false;
     this.storeService.isDraggableElementProcessing = true;
-    this._setDraggableElementTop(`${this._config.initialTopPercentage}%`);
+    this.setDraggableElementTop(0);
 
     setTimeout(() => {
-      this.storeService.isDraggableElementExpanded = false;
       this.storeService.isDraggableElementProcessing = false;
-    }, this._config.animationsTimeMs);
+    }, this.config.animationsTimeMs);
   }
 
-  private _expandDraggableElement(): void {
-    this._removeDraggingListener();
-    this.storeService.isDraggableElementProcessing = true;
-    this._setDraggableElementTop(0);
-
-    setTimeout(() => {
-      this.storeService.isDraggableElementExpanded = true;
-      this.storeService.isDraggableElementProcessing = false;
-    }, this._config.animationsTimeMs);
-  }
-
-  private _collapseDraggableElement(): void {
-    this._removeDraggingListener();
+  private collapseDraggableElement(): void {
+    this.removeDraggingListener();
     this.storeService.isDraggableElementProcessing = true;
     this.storeService.hide$.next();
   }
 
-  private _setDraggableElementTop(top: string | number): void {
-    this.domService.setTop(this._draggableElement, top);
+  private setDraggableElementTop(top: string | number): void {
+    this.domService.setTop(this.draggableElement, top);
   }
 
-  private _toggleDraggableElementTransition(enableTransition: boolean): void {
+  private toggleDraggableElementTransition(enableTransition: boolean): void {
     const transitionClass = 'content--no-transition';
     if (!enableTransition) {
       this.domService.renderer.removeClass(
-        this._draggableElement,
+        this.draggableElement,
         transitionClass
       );
-    } else if (!this._draggableElement.className.includes(transitionClass)) {
-      this.domService.renderer.addClass(
-        this._draggableElement,
-        transitionClass
-      );
+    } else if (!this.draggableElement.className.includes(transitionClass)) {
+      this.domService.renderer.addClass(this.draggableElement, transitionClass);
     }
   }
 
-  private _removeDraggingStartListener(): void {
-    this._draggingStartSubscription?.unsubscribe();
+  private removeDraggingStartListener(): void {
+    this.draggingStartSubscription?.unsubscribe();
   }
 
-  private _removeDraggingListener(): void {
-    this._draggingSubscription?.unsubscribe();
-    this._toggleDraggableElementTransition(false);
+  private removeDraggingListener(): void {
+    this.draggingSubscription?.unsubscribe();
+    this.toggleDraggableElementTransition(false);
   }
 
-  private _removeDraggingEndListener(): void {
-    this._draggingEndSubscription?.unsubscribe();
+  private removeDraggingEndListener(): void {
+    this.draggingEndSubscription?.unsubscribe();
   }
 
-  private get _shouldToExpand(): boolean {
+  private get shouldToExpand(): boolean {
     if (
-      !isDefined(this._config.expandAfterTopPercentage) ||
-      isNaN(this._config.expandAfterTopPercentage!)
+      !isDefined(this.config.expandAfterTopPercentage) ||
+      isNaN(this.config.expandAfterTopPercentage!)
     ) {
       return false;
     }
 
     const autoExpandIndentPx =
-      (this._borderElement.offsetHeight / 100) *
-      this._config.expandAfterTopPercentage!;
-    return this._draggableElement.offsetTop <= autoExpandIndentPx;
+      (this.borderElement.offsetHeight / 100) *
+      this.config.expandAfterTopPercentage!;
+    return this.draggableElement.offsetTop <= autoExpandIndentPx;
   }
 
-  private get _shouldToCollapse(): boolean {
+  private get shouldToCollapse(): boolean {
     if (
-      !isDefined(this._config.collapseAfterTopPercentage) ||
-      isNaN(this._config.collapseAfterTopPercentage!)
+      !isDefined(this.config.collapseAfterTopPercentage) ||
+      isNaN(this.config.collapseAfterTopPercentage!)
     ) {
       return false;
     }
 
     const autoCollapseIndentPx =
-      (this._borderElement.offsetHeight / 100) *
-      this._config.collapseAfterTopPercentage!;
-    return this._draggableElement.offsetTop >= autoCollapseIndentPx;
+      (this.borderElement.offsetHeight / 100) *
+      this.config.collapseAfterTopPercentage!;
+    return this.draggableElement.offsetTop >= autoCollapseIndentPx;
   }
 
-  private get _config(): IBottomSheetConfig {
+  private get config(): BottomSheetConfig {
     return this.configService.config;
   }
 }

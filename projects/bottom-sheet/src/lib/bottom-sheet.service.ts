@@ -8,7 +8,7 @@ import {
   Type,
 } from '@angular/core';
 import { fromEvent, Subject } from 'rxjs';
-import { IBottomSheetConfig } from './config.interface';
+import { BottomSheetConfig } from './config.interface';
 import { BottomSheetRef } from './bottom-sheet-ref.class';
 import { BottomSheetComponent } from './bottom-sheet.component';
 import { ConfigService } from './config.service';
@@ -17,10 +17,10 @@ import { StoreService } from './store.service';
 
 @Injectable({ providedIn: 'root' })
 export class BottomSheetService {
-  private _bottomSheetComponentRef: ComponentRef<BottomSheetComponent> | null =
+  private bottomSheetComponentRef: ComponentRef<BottomSheetComponent> | null =
     null;
 
-  private readonly _bottomSheetOnHidden$ = new Subject<void>();
+  private readonly bottomSheetOnHidden$ = new Subject<void>();
 
   constructor(
     private readonly injector: Injector,
@@ -30,52 +30,55 @@ export class BottomSheetService {
     private readonly applicationRef: ApplicationRef,
     private readonly componentFactoryResolver: ComponentFactoryResolver
   ) {
-    this._initListeners();
+    this.initListeners();
   }
 
-  show<T>(component: Type<T>, config?: IBottomSheetConfig<T>): BottomSheetRef {
+  show<T>(
+    component: Type<T>,
+    config?: Partial<BottomSheetConfig<T>>
+  ): BottomSheetRef {
     if (config) {
-      this.configService.config = config;
+      this.configService.config = config as BottomSheetConfig;
     }
 
-    this._initBottomSheetComponent();
-    this._initTargetComponent<T>(component);
-    this._addBottomSheetComponentToBody();
+    this.initBottomSheetComponent();
+    this.initTargetComponent<T>(component);
+    this.addBottomSheetComponentToBody();
 
     return new BottomSheetRef({
-      onHidden: this._bottomSheetOnHidden$.asObservable(),
+      onHidden: this.bottomSheetOnHidden$.asObservable(),
     });
   }
 
   hide(): void {
-    this._removeBottomSheetComponentFromBody();
-    this._bottomSheetOnHidden$.next();
+    this.removeBottomSheetComponentFromBody();
+    this.bottomSheetOnHidden$.next();
   }
 
-  private _initListeners(): void {
+  private initListeners(): void {
     this.storeService.bottomSheetHideSub?.unsubscribe();
     this.storeService.bottomSheetHideSub = this.storeService.hide$.subscribe(
       () => this.hide()
     );
   }
 
-  private _initBottomSheetComponent(): void {
-    this._bottomSheetComponentRef = this.componentFactoryResolver
+  private initBottomSheetComponent(): void {
+    this.bottomSheetComponentRef = this.componentFactoryResolver
       .resolveComponentFactory(BottomSheetComponent)
       .create(this.injector);
 
-    this._bottomSheetComponentRef.instance.animationTime = `${this._config.animationsTimeMs}ms`;
-    this._bottomSheetComponentRef.instance.initialIndentFromTop = `${this._config.initialTopPercentage}%`;
+    this.bottomSheetComponentRef.instance.animationTime = `${this.config.animationsTimeMs}ms`;
+    this.bottomSheetComponentRef.instance.initialIndentFromTop = `${this.config.initialTopPercentage}%`;
   }
 
-  private _initTargetComponent<T>(component: Type<T>): void {
+  private initTargetComponent<T>(component: Type<T>): void {
     const componentRef =
-      this._bottomSheetComponentRef!.instance.contentViewContainerRef.createComponent(
+      this.bottomSheetComponentRef!.instance.contentViewContainerRef.createComponent(
         component
       );
 
-    if (this._config.initialState) {
-      Object.entries(this._config.initialState).forEach(([key, value]) => {
+    if (this.config.initialState) {
+      Object.entries(this.config.initialState).forEach(([key, value]) => {
         (componentRef.instance as any)[key] = value;
       });
     }
@@ -83,33 +86,33 @@ export class BottomSheetService {
     componentRef.changeDetectorRef.detectChanges();
   }
 
-  private _addBottomSheetComponentToBody(): void {
-    this.applicationRef.attachView(this._bottomSheetComponentRef!.hostView);
+  private addBottomSheetComponentToBody(): void {
+    this.applicationRef.attachView(this.bottomSheetComponentRef!.hostView);
     this.domService.renderer.appendChild(
       this.domService.body,
-      this._bottomSheetHostElement
+      this.bottomSheetHostElement
     );
-    this._addListenersToBottomSheetComponent();
+    this.addListenersToBottomSheetComponent();
   }
 
-  private _removeBottomSheetComponentFromBody(): void {
+  private removeBottomSheetComponentFromBody(): void {
     this.storeService.isDraggableElementProcessing = false;
     this.storeService.bottomSheetHostClickSub?.unsubscribe();
-    this.applicationRef.detachView(this._bottomSheetComponentRef!.hostView);
+    this.applicationRef.detachView(this.bottomSheetComponentRef!.hostView);
 
     this.storeService.bottomSheetHostAnimationDoneSub =
-      this._bottomSheetComponentRef!.instance.hostAnimationDone$.subscribe(
+      this.bottomSheetComponentRef!.instance.hostAnimationDone$.subscribe(
         () => {
           this.storeService.bottomSheetHostAnimationDoneSub?.unsubscribe();
-          this._bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
-          this._bottomSheetComponentRef!.destroy();
+          this.bottomSheetComponentRef!.instance.contentViewContainerRef.clear();
+          this.bottomSheetComponentRef!.destroy();
         }
       );
   }
 
-  private _addListenersToBottomSheetComponent(): void {
+  private addListenersToBottomSheetComponent(): void {
     this.storeService.bottomSheetHostClickSub = fromEvent<MouseEvent>(
-      this._bottomSheetHostElement,
+      this.bottomSheetHostElement,
       'click'
     ).subscribe((event) => {
       if (!this.storeService.canHide) {
@@ -117,8 +120,8 @@ export class BottomSheetService {
       }
 
       const isClickInside =
-        (event.target as HTMLElement) !== this._bottomSheetBackdropElement;
-      if (isClickInside && !this._config.hideOnClickInside) {
+        (event.target as HTMLElement) !== this.bottomSheetBackdropElement;
+      if (isClickInside && !this.config.hideOnClickInside) {
         return;
       }
 
@@ -126,16 +129,16 @@ export class BottomSheetService {
     });
   }
 
-  private get _config(): IBottomSheetConfig {
+  private get config(): BottomSheetConfig {
     return this.configService.config;
   }
 
-  private get _bottomSheetHostElement(): HTMLElement {
-    return (this._bottomSheetComponentRef!.hostView as EmbeddedViewRef<unknown>)
+  private get bottomSheetHostElement(): HTMLElement {
+    return (this.bottomSheetComponentRef!.hostView as EmbeddedViewRef<unknown>)
       ?.rootNodes[0] as HTMLElement;
   }
 
-  private get _bottomSheetBackdropElement(): HTMLElement {
-    return this._bottomSheetComponentRef!.instance.backdropRef.nativeElement;
+  private get bottomSheetBackdropElement(): HTMLElement {
+    return this.bottomSheetComponentRef!.instance.backdropRef.nativeElement;
   }
 }

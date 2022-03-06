@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { IBottomSheetConfig } from './config.interface';
+import { BottomSheetConfig } from './config.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  private _config: IBottomSheetConfig = {
+  private configState: BottomSheetConfig = {
     animationsTimeMs: 300,
     canHide: true,
     collapseAfterTopPercentage: 85,
@@ -12,14 +12,14 @@ export class ConfigService {
     initialTopPercentage: 65,
   };
 
-  get config(): IBottomSheetConfig {
-    return this._config;
+  get config(): BottomSheetConfig {
+    return this.configState;
   }
 
-  set config(config: IBottomSheetConfig) {
+  set config(config: BottomSheetConfig) {
     if (!config) {
       return;
     }
-    this._config = { ...this._config, ...config };
+    this.configState = { ...this.configState, ...config };
   }
 }

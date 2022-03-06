@@ -8,7 +8,7 @@ export class StoreService implements OnDestroy {
 
   draggingHandleElement: HTMLElement | null = null;
   isDraggableElementProcessing = false;
-  isDraggableElementExpanded = false;
+  isDraggableElementAutoExpandable = false;
 
   bottomSheetHostAnimationDoneSub: SubscriptionLike | null = null;
   bottomSheetHostClickSub: SubscriptionLike | null = null;

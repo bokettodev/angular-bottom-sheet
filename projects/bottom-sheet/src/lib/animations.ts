@@ -9,7 +9,7 @@ import {
 } from '@angular/animations';
 
 /**
- * FADE ANIMATION
+ * FADE ANIMATIONS
  */
 // Styles
 const FADE_IN = { opacity: 1 };
@@ -38,7 +38,7 @@ export const FADE_IN_OUT_ANIMATION = trigger('fadeInOutAnimation', [
 ]);
 
 /**
- * SLIDE ANIMATION
+ * SLIDE ANIMATIONS
  */
 // Styles
 const SLIDE_IN = { top: '*' };

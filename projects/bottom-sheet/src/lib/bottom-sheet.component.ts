@@ -52,7 +52,7 @@ export class BottomSheetComponent {
   readonly hostAnimationDone$ = new Subject<void>();
 
   @HostListener('@bottomSheetHostAnimation.done')
-  private _hostAnimationDone(): void {
+  private hostAnimationDone(): void {
     this.hostAnimationDone$.next();
   }
 
