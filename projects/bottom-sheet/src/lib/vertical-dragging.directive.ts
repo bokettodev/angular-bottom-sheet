@@ -46,7 +46,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
 
     this.verticalBoundaries = {
       min: this.borderElement.offsetTop,
-      max: this.borderElement.offsetTop + this.borderElement.offsetHeight,
+      max: this.borderElement.offsetTop + this.borderElement.offsetHeight * 0.9,
     };
   }
 
@@ -105,7 +105,7 @@ export class VerticalDraggingDirective implements AfterViewInit, OnDestroy {
         } else {
           this.setDraggableElementTop(`${topPx}px`);
         }
-      } else if (this.shouldToCollapse) {
+      } else if (this.shouldToCollapse && this.storeService.canHide) {
         this.collapseDraggableElement();
       } else {
         this.storeService.isDraggableElementAutoExpandable = true;
